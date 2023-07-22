@@ -120,10 +120,15 @@ simulator.addEventListener("click", (e)=> {
     Body.applyForce(ball2, simPos, clickVect(ball2));
 })
 
+let gravMult = -0.0001;
+
 Events.on(engine, 'beforeUpdate', ()=>{ // TODO: Attraction between particles
-    // if(ball1.charge === ball2.charge){
-        // Body.applyForce(ball1, ball2.position, 0.0001)
-        // Body.applyForce(ball2, ball1.position, 0.0001)
+    let gravVect = function(ball1, ball2){
+        return {x: gravMult * (ball1.position.x - ball2.position.x), y: gravMult * (ball1.position.y - ball2.position.y)};
+    }
+    // if(ball1.charge !== ball2.charge){
+        Body.applyForce(ball1, ball2.position, gravVect(ball1, ball2))
+        Body.applyForce(ball2, ball1.position, gravVect(ball1, ball2))
     // } else {
     //     Body.applyForce(ball1, ball2.position, 0.005)
     //     Body.applyForce(ball2, ball1.position, 0.005)
