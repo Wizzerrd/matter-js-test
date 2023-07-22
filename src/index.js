@@ -1,5 +1,7 @@
 import * as Matter from 'matter-js'; // gotta import the files !!!
 import * as MatterWrap from 'matter-wrap';
+import createBall from './scripts/ball.js';
+
 Matter.use(MatterWrap);
 
 document.addEventListener("DOMContentLoaded", ()=>{console.log('hello world')}) 
@@ -13,11 +15,7 @@ var Engine = Matter.Engine,
     Composite = Matter.Composite,
     Body = Matter.Body,
     Mouse = Matter.Mouse,
-    Events = Matter.Events;
-
-// Matter.Bodies.prototype.onClick = function(){
-//     console.log("banana")
-// };
+    Events = Matter.Events
 
 // create an engine
 var engine = Engine.create({gravity: {
@@ -25,6 +23,8 @@ var engine = Engine.create({gravity: {
     x: 0,
     y: 1
 }});
+
+engine.world
 // engine default gravity params:
 // scale: 0.001
 // x: 0
@@ -33,27 +33,24 @@ var engine = Engine.create({gravity: {
 
 // create a renderer
 // element: HTMLElement is converted into a canvas upon which the simulation is rendered
+var simmy = document.querySelector('#simulator');
 var render = Render.create({
-    element: document.querySelector('#simulator'),
-    engine: engine
-});
-
-// create a box and a circle
-var ball = Bodies.circle(450, 50, 80, {
-    plugin: {
-        wrap: {
-            min: {
-                x: 0
-            },
-            max: {
-                x: 800
-            }
-        }
+    element: simmy,
+    engine: engine,
+    options: {
+        width: window.innerWidth * 0.5,
+        height: window.innerHeight * 0.9,
+        wireframes: false,
+        background: 'white',
     }
 });
 
+// create ions
+var ball1 = createBall(render);
+var ball2 = createBall(render);
+
 // create boundaries
-var ground = Bodies.rectangle(400, 610, 2000, 60, { isStatic: true });
+var ground = Bodies.rectangle(render.options.width / 2, render.options.height, render.options.width * 2, 60, { isStatic: true });
 // var rightBound = Bodies.rectangle(-10, 300, 60, 610, { isStatic: true });
 // var leftBound = Bodies.rectangle(810, 300, 60, 610, { isStatic: true });
 // var roof = Bodies.rectangle(400, -10, 810, 60, { isStatic: true });
@@ -62,7 +59,7 @@ var ground = Bodies.rectangle(400, 610, 2000, 60, { isStatic: true });
 Composite.add(engine.world, [ground])
 
 // add all of the bodies to the world
-Composite.add(engine.world, [ball]);
+Composite.add(engine.world, [ball1, ball2]);
 
 // run the renderer
 Render.run(render);
@@ -112,6 +109,23 @@ simulator.addEventListener("click", (e)=> {
     } else {
         clickMult = 0.002
     }
-    let clickVect = {x: clickMult * (simPos.x - ball.position.x), y: clickMult * (simPos.y - ball.position.y)};
-    Body.applyForce(ball, simPos, clickVect);
+    // let clickVect = {x: clickMult * (simPos.x - ball.position.x), y: clickMult * (simPos.y - ball.position.y)};
+    let clickVect = function(ball){
+        return {x: clickMult * (simPos.x - ball.position.x), y: clickMult * (simPos.y - ball.position.y)};
+    }
+
+    Body.applyForce(ball1, simPos, clickVect(ball1));
+    Body.applyForce(ball2, simPos, clickVect(ball2));
 })
+
+Events.on(engine, 'beforeUpdate', ()=>{ // TODO: Attraction between particles
+    // if(ball1.charge === ball2.charge){
+        // Body.applyForce(ball1, ball2.position, 0.0001)
+        // Body.applyForce(ball2, ball1.position, 0.0001)
+    // } else {
+    //     Body.applyForce(ball1, ball2.position, 0.005)
+    //     Body.applyForce(ball2, ball1.position, 0.005)
+    // }
+})
+
+

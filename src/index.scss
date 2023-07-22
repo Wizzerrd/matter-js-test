@@ -1,9 +1,11 @@
 #holder {
+    position: relative;
     display: flex;
     flex-direction: row;
     padding: 20px;
     background-color: gray;
     justify-content: center;
+    height: 100%;
 }
 
 #buttons {
@@ -12,4 +14,8 @@
     justify-content: space-evenly;
     background-color: lightgray;
     padding: 20px;
+}
+
+#simulator {
+    position: relative;
 }

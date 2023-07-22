@@ -2,11 +2,13 @@
   !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[1].use[1]!./node_modules/sass-loader/dist/cjs.js!./src/index.scss ***!
   \*************************************************************************************************************************************/
 #holder {
+  position: relative;
   display: flex;
   flex-direction: row;
   padding: 20px;
   background-color: gray;
   justify-content: center;
+  height: 100%;
 }
 
 #buttons {
@@ -15,4 +17,8 @@
   justify-content: space-evenly;
   background-color: lightgray;
   padding: 20px;
+}
+
+#simulator {
+  position: relative;
 }
