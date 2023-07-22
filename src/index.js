@@ -77,11 +77,13 @@ var vButton = document.querySelector('#vertical-force');
 var pushButton = document.querySelector('#push-pull');
 
 hButton.addEventListener("click", ()=> {
-    Body.applyForce(ball, ball.position, {x: 1, y:0});
+    Body.applyForce(ball1, ball1.position, {x: 1, y:0});
+    Body.applyForce(ball2, ball2.position, {x: 1, y:0});
 })
 
 vButton.addEventListener("click", ()=> {
-    Body.applyForce(ball, ball.position, {x:0, y:-1});
+    Body.applyForce(ball1, ball1.position, {x:0, y:-1});
+    Body.applyForce(ball2, ball2.position, {x: 0, y:-1});
 })
 
 // Mouse Input
