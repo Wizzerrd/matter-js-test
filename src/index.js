@@ -2,6 +2,8 @@ import * as Matter from 'matter-js'; // gotta import the files !!!
 import * as MatterWrap from 'matter-wrap';
 import createBall from './scripts/ball.js';
 
+import * as ChartJS from 'chart.js/auto'; // import from chart.js/auto
+
 Matter.use(MatterWrap);
 
 document.addEventListener("DOMContentLoaded", ()=>{console.log('hello world')}) 
@@ -24,7 +26,6 @@ var engine = Engine.create({gravity: {
     y: 1
 }});
 
-engine.world
 // engine default gravity params:
 // scale: 0.001
 // x: 0
@@ -126,13 +127,19 @@ Events.on(engine, 'beforeUpdate', ()=>{ // TODO: Attraction between particles
     let gravVect = function(ball1, ball2){
         return {x: gravMult * (ball1.position.x - ball2.position.x), y: gravMult * (ball1.position.y - ball2.position.y)};
     }
-    // if(ball1.charge !== ball2.charge){
-        Body.applyForce(ball1, ball2.position, gravVect(ball1, ball2))
-        Body.applyForce(ball2, ball1.position, gravVect(ball1, ball2))
-    // } else {
-    //     Body.applyForce(ball1, ball2.position, 0.005)
-    //     Body.applyForce(ball2, ball1.position, 0.005)
-    // }
-})
 
+    // if(ball1.charge !== ball2.charge){
+        ball1.gravVect = gravVect(ball1, ball2);
+        ball2.gravVect = gravVect(ball2, ball1);
+        let gravver = {x: ball1.gravVect.x + ball2.gravVect.x, y: ball1.gravVect.y + ball2.gravVect.y}
+        
+        Body.applyForce(ball1, ball2.position, ball1.gravVect);
+        Body.applyForce(ball2, ball1.position, gravVect(ball1, ball2));
+
+        // } else {
+            //     Body.applyForce(ball1, ball2.position, 0.005)
+            //     Body.applyForce(ball2, ball1.position, 0.005)
+            // }
+
+})
 

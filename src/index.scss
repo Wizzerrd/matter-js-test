@@ -19,3 +19,11 @@
 #simulator {
     position: relative;
 }
+
+#chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 30%;
+    justify-content: flex-end;
+}
