@@ -24,6 +24,15 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    width: 30%;
+    width: 0%;
     justify-content: flex-end;
+}
+
+#blue{
+    background-color: blue;
+    color: white;
+}
+
+#yellow{
+    background-color: yellow;
 }

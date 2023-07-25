@@ -1,14 +1,7 @@
 import * as Matter from 'matter-js'; // gotta import the files !!!
 import * as MatterWrap from 'matter-wrap';
 
-var Engine = Matter.Engine,
-    Render = Matter.Render,
-    Runner = Matter.Runner,
-    Bodies = Matter.Bodies,
-    Composite = Matter.Composite,
-    Body = Matter.Body,
-    Mouse = Matter.Mouse,
-    Events = Matter.Events
+var Bodies = Matter.Bodies;
 
 function randomCharge(){
     let seed = Math.random()
@@ -19,19 +12,23 @@ function randomCharge(){
     }
 }
 
-function createBall(render){
-    var ball = Bodies.circle(Math.random() * render.options.width, Math.random() * render.options.height , 80, {
+function createBall(render, pos){
+    var ball = Bodies.circle(pos[0], pos[1] , 5, {
         plugin: {
             wrap: { //matter-wrap plugin code. Very easy to apply!
                 min: {
-                    x: 0
+                    x: 0,
+                    y: 0
                 },
                 max: {
-                    x: render.options.width
+                    x: render.options.width,
+                    y: render.options.height
                 }
             }
         },
-        charge: randomCharge()
+        charge: randomCharge(),
+        frictionAir: 0.001,
+        friction: 0
     });
     return ball;
 }

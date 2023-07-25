@@ -17,14 +17,17 @@ var Engine = Matter.Engine,
     Composite = Matter.Composite,
     Body = Matter.Body,
     Mouse = Matter.Mouse,
-    Events = Matter.Events
+    Events = Matter.Events,
+    Collision = Matter.Collision
 
 // create an engine
 var engine = Engine.create({gravity: {
-    scale: 0.001,
+    scale: 0,
     x: 0,
     y: 1
 }});
+
+const NUM_BALLS = 500;
 
 // engine default gravity params:
 // scale: 0.001
@@ -47,20 +50,31 @@ var render = Render.create({
 });
 
 // create ions
-var ball1 = createBall(render);
-var ball2 = createBall(render);
+
+var balls = [];
+
+function addBalls(){
+    for(let i = 0; i < NUM_BALLS; i++){
+        balls.push(createBall(render, [Math.random() * render.options.width, Math.random() * render.options.height]))
+    }
+}
+
+addBalls();
 
 // create boundaries
-var ground = Bodies.rectangle(render.options.width / 2, render.options.height, render.options.width * 2, 60, { isStatic: true });
-// var rightBound = Bodies.rectangle(-10, 300, 60, 610, { isStatic: true });
-// var leftBound = Bodies.rectangle(810, 300, 60, 610, { isStatic: true });
-// var roof = Bodies.rectangle(400, -10, 810, 60, { isStatic: true });
+var ground = Bodies.rectangle(render.options.width / 2, render.options.height + 2490, render.options.width * 2, 5000, { isStatic: true });
+var leftBound = Bodies.rectangle(-2490, render.options.height / 2, 5000, render.options.height, { isStatic: true });
+var rightBound = Bodies.rectangle(render.options.width + 2490, render.options.height / 2, 5000, render.options.height, { isStatic: true });
+var roof = Bodies.rectangle(render.options.width / 2, -2490, render.options.width * 2, 5000, { isStatic: true });
+
+var walls = [ground,leftBound,rightBound,roof];
+var wallBool = true;
 
 // add boundaries to the world
-Composite.add(engine.world, [ground])
+Composite.add(engine.world, walls)
 
 // add all of the bodies to the world
-Composite.add(engine.world, [ball1, ball2]);
+Composite.add(engine.world, balls);
 
 // run the renderer
 Render.run(render);
@@ -71,24 +85,40 @@ var runner = Runner.create();
 // run the engine
 Runner.run(runner, engine);
 
+
 // Buttons
 
-var hButton = document.querySelector('#horizontal-force');
-var vButton = document.querySelector('#vertical-force');
 var pushButton = document.querySelector('#push-pull');
+var hitButton = document.getElementById('hits')
 
-hButton.addEventListener("click", ()=> {
-    Body.applyForce(ball1, ball1.position, {x: 1, y:0});
-    Body.applyForce(ball2, ball2.position, {x: 1, y:0});
+var wallButton = document.getElementById('walls')
+
+function toggleWrap(bodies){
+    bodies.forEach((body)=>{
+        if (wallBool){
+            body.plugin.wrap.x = undefined
+            body.plugin.wrap.y = undefined
+        } else {
+            body.plugin.wrap.x = render.options.width;
+            body.plugin.wrap.y = render.options.height;
+        }
+    })
+}
+
+wallButton.addEventListener("click", ()=>{
+    toggleWrap(balls);
+    if (wallBool){
+        Composite.remove(engine.world, walls)
+        wallBool = false;
+    }else{
+        Composite.add(engine.world, walls)
+        wallBool = true;
+    }
 })
 
-vButton.addEventListener("click", ()=> {
-    Body.applyForce(ball1, ball1.position, {x:0, y:-1});
-    Body.applyForce(ball2, ball2.position, {x: 0, y:-1});
-})
+var clickMult = (1000/NUM_BALLS);
 
 // Mouse Input
-
 var simulator = document.querySelector('#simulator');
 var simRect = simulator.getBoundingClientRect();
 
@@ -106,40 +136,109 @@ pushButton.addEventListener("click", ()=> {
 
 simulator.addEventListener("click", (e)=> {
     let simPos = {x: e.clientX - simRect.x , y: e.clientY - simRect.y};
-    let clickMult = -0.002;
     if(pushBool) {
-        clickMult = -0.002
+        clickMult = -0.000005
     } else {
-        clickMult = 0.002
+        clickMult = 0.000005
     }
-    // let clickVect = {x: clickMult * (simPos.x - ball.position.x), y: clickMult * (simPos.y - ball.position.y)};
+    
     let clickVect = function(ball){
         return {x: clickMult * (simPos.x - ball.position.x), y: clickMult * (simPos.y - ball.position.y)};
     }
 
-    Body.applyForce(ball1, simPos, clickVect(ball1));
-    Body.applyForce(ball2, simPos, clickVect(ball2));
+    balls.forEach((ball)=>{
+        Body.applyForce(ball, simPos, clickVect(ball));
+    })
 })
 
-let gravMult = -0.0001;
+//
 
-Events.on(engine, 'beforeUpdate', ()=>{ // TODO: Attraction between particles
-    let gravVect = function(ball1, ball2){
-        return {x: gravMult * (ball1.position.x - ball2.position.x), y: gravMult * (ball1.position.y - ball2.position.y)};
+
+let gravField = document.getElementById('grav-mult');
+let gravMult = Number(gravField.value) * 0.005
+
+var collisions = false;
+hitButton.addEventListener("click", ()=> {
+    if(collisions){
+        collisions = false;
+    } else {
+        collisions = true;
+    }
+})
+
+let gravVect = function(ball1, ball2){
+    let deltX = ball2.position.x - ball1.position.x;
+    let deltY = ball2.position.y - ball1.position.y;
+    let distanceSq = deltX ** 2 + deltY ** 2;
+
+    if(distanceSq === 0){
+        return {x: 0, y: 0};
     }
 
-    // if(ball1.charge !== ball2.charge){
+    const forceMag = gravMult / distanceSq;
+    return {x: forceMag * deltX, y: forceMag * deltY};
+
+    // return {x: (gravMult * (ball2.position.x - ball1.position.x)), y: (gravMult * (ball2.position.y - ball1.position.y))};
+}
+
+let applyGrav = function(ball1, ball2){
+    if(ball1.charge !== ball2.charge){
         ball1.gravVect = gravVect(ball1, ball2);
         ball2.gravVect = gravVect(ball2, ball1);
-        let gravver = {x: ball1.gravVect.x + ball2.gravVect.x, y: ball1.gravVect.y + ball2.gravVect.y}
-        
-        Body.applyForce(ball1, ball2.position, ball1.gravVect);
-        Body.applyForce(ball2, ball1.position, gravVect(ball1, ball2));
+        Body.applyForce(ball1, ball1.position, ball1.gravVect);
+        Body.applyForce(ball2, ball2.position, ball2.gravVect);
+    } else {
+        ball1.gravVect = gravVect(ball1, ball2);
+        ball2.gravVect = gravVect(ball2, ball1);
+        Body.applyForce(ball1, ball1.position, ball2.gravVect);
+        Body.applyForce(ball2, ball2.position, ball1.gravVect);
+    }
+}
 
-        // } else {
-            //     Body.applyForce(ball1, ball2.position, 0.005)
-            //     Body.applyForce(ball2, ball1.position, 0.005)
-            // }
+Events.on(engine, 'beforeUpdate', ()=>{
 
+    gravMult = Number(gravField.value) * 0.005
+
+    if(collisions){
+        hitButton.innerHTML = "Interactions On"
+    }else{
+        hitButton.innerHTML = "Interactions Off"
+    }
+
+    
+    for(let i = 0; i < balls.length; i++){
+        for(let j = i + 1; j < balls.length; j++){
+            if (collisions){
+                let collision = Collision.collides(balls[i],balls[j])
+                if(collision){
+                    if(balls[i].charge !== balls[j].charge){
+                        balls[i].setRemove = true;
+                        balls[j].setRemove = true;
+                    } else {
+                        let newBall = createBall(render, [Math.random() * render.options.width, Math.random() * render.options.height]);
+                        balls.push(newBall)
+                        Composite.add(engine.world, newBall);
+                    }
+                }
+            }
+            applyGrav(balls[i],balls[j]);
+        }
+    }
+
+    balls = balls.filter((ball)=>{
+        if(ball.setRemove === true){
+            Composite.remove(engine.world, ball)
+            return false;
+        }
+        return true;
+    })
+    
+    window.balls = balls;
+    window.engine = engine;
+    console.log(balls.length)
 })
+
+window.NUM_BALLS = NUM_BALLS;
+window.render = render;
+
 
