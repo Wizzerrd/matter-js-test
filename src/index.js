@@ -134,7 +134,7 @@ pushButton.addEventListener("click", ()=> {
     }
 })
 
-simulator.addEventListener("click", (e)=> {
+simulator.addEventListener("mousedown", (e)=> {
     let simPos = {x: e.clientX - simRect.x , y: e.clientY - simRect.y};
     if(pushBool) {
         clickMult = -0.000005
@@ -195,9 +195,12 @@ let applyGrav = function(ball1, ball2){
     }
 }
 
+var maxField = document.getElementById('max-balls')
+
 Events.on(engine, 'beforeUpdate', ()=>{
 
     gravMult = Number(gravField.value) * 0.005
+    var maxBalls = Number(maxField.value);
 
     if(collisions){
         hitButton.innerHTML = "Interactions On"
@@ -214,7 +217,7 @@ Events.on(engine, 'beforeUpdate', ()=>{
                     if(balls[i].charge !== balls[j].charge){
                         balls[i].setRemove = true;
                         balls[j].setRemove = true;
-                    } else {
+                    } else if(balls.length < maxBalls){
                         let newBall = createBall(render, [Math.random() * render.options.width, Math.random() * render.options.height]);
                         balls.push(newBall)
                         Composite.add(engine.world, newBall);

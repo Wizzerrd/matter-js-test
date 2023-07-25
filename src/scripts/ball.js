@@ -12,7 +12,16 @@ function randomCharge(){
     }
 }
 
+function returnColor(charge){
+    if(charge){
+        return "red"
+    } else {
+        return "blue"
+    }
+}
+
 function createBall(render, pos){
+    var charge = randomCharge();
     var ball = Bodies.circle(pos[0], pos[1] , 5, {
         plugin: {
             wrap: { //matter-wrap plugin code. Very easy to apply!
@@ -26,7 +35,10 @@ function createBall(render, pos){
                 }
             }
         },
-        charge: randomCharge(),
+        charge: charge,
+        render: {
+            fillStyle: returnColor(charge)
+        },
         frictionAir: 0.001,
         friction: 0
     });
